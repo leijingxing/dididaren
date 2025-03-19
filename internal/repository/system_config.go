@@ -16,22 +16,19 @@ func NewSystemConfigRepository(db *gorm.DB) *SystemConfigRepository {
 	}
 }
 
-// GetByKey 根据配置键获取配置
-func (r *SystemConfigRepository) GetByKey(key string) (*model.SystemConfig, error) {
-	var config model.SystemConfig
-	err := r.db.Where("config_key = ?", key).First(&config).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &config, nil
-}
-
 // Create 创建配置
 func (r *SystemConfigRepository) Create(config *model.SystemConfig) error {
 	return r.db.Create(config).Error
+}
+
+// GetByKey 根据key获取配置
+func (r *SystemConfigRepository) GetByKey(key string) (*model.SystemConfig, error) {
+	var config model.SystemConfig
+	err := r.db.Where("key = ?", key).First(&config).Error
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 // Update 更新配置
@@ -41,11 +38,11 @@ func (r *SystemConfigRepository) Update(config *model.SystemConfig) error {
 
 // Delete 删除配置
 func (r *SystemConfigRepository) Delete(key string) error {
-	return r.db.Where("config_key = ?", key).Delete(&model.SystemConfig{}).Error
+	return r.db.Where("key = ?", key).Delete(&model.SystemConfig{}).Error
 }
 
-// GetAll 获取所有配置
-func (r *SystemConfigRepository) GetAll() ([]*model.SystemConfig, error) {
+// List 获取配置列表
+func (r *SystemConfigRepository) List() ([]*model.SystemConfig, error) {
 	var configs []*model.SystemConfig
 	err := r.db.Find(&configs).Error
 	if err != nil {
@@ -54,22 +51,17 @@ func (r *SystemConfigRepository) GetAll() ([]*model.SystemConfig, error) {
 	return configs, nil
 }
 
-// GetValueByKey 获取配置值
-func (r *SystemConfigRepository) GetValueByKey(key string) (string, error) {
+// GetValue 获取配置值
+func (r *SystemConfigRepository) GetValue(key string) (string, error) {
 	var config model.SystemConfig
-	err := r.db.Where("config_key = ?", key).First(&config).Error
+	err := r.db.Where("key = ?", key).First(&config).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return "", nil
-		}
 		return "", err
 	}
-	return config.ConfigValue, nil
+	return config.Value, nil
 }
 
 // UpdateValue 更新配置值
 func (r *SystemConfigRepository) UpdateValue(key string, value string) error {
-	return r.db.Model(&model.SystemConfig{}).
-		Where("config_key = ?", key).
-		Update("config_value", value).Error
+	return r.db.Model(&model.SystemConfig{}).Where("key = ?", key).Update("value", value).Error
 }

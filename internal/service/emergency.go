@@ -3,6 +3,7 @@ package service
 import (
 	"dididaren/internal/model"
 	"dididaren/internal/repository"
+	"errors"
 	"time"
 )
 
@@ -11,57 +12,91 @@ type EmergencyService struct {
 }
 
 func NewEmergencyService(repo *repository.EmergencyRepository) *EmergencyService {
-	return &EmergencyService{
-		repo: repo,
-	}
+	return &EmergencyService{repo: repo}
 }
 
-// Create 创建紧急事件
-func (s *EmergencyService) Create(req *model.CreateEmergencyRequest) (*model.Emergency, error) {
-	event := &model.Emergency{
-		UserID:      req.UserID,
-		EventType:   req.EventType,
-		LocationLat: req.LocationLat,
-		LocationLng: req.LocationLng,
-		Address:     req.Address,
+func (s *EmergencyService) CreateEmergency(userID uint, req *model.CreateEmergencyRequest) (*model.Emergency, error) {
+	emergency := &model.Emergency{
+		UserID:      userID,
+		Title:       req.Title,
 		Description: req.Description,
+		Location:    req.Location,
+		Latitude:    req.Latitude,
+		Longitude:   req.Longitude,
+		Level:       req.Level,
 		Status:      "pending",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		StartTime:   time.Now(),
 	}
 
-	return s.repo.Create(event)
+	if err := s.repo.CreateEmergency(emergency); err != nil {
+		return nil, err
+	}
+
+	return emergency, nil
 }
 
-// GetByID 获取事件详情
-func (s *EmergencyService) GetByID(id string) (*model.Emergency, error) {
-	return s.repo.GetByID(id)
+func (s *EmergencyService) GetEmergencyByID(id uint) (*model.Emergency, error) {
+	return s.repo.GetEmergencyByID(id)
 }
 
-// UpdateStatus 更新事件状态
-func (s *EmergencyService) UpdateStatus(id string, status string) error {
-	return s.repo.UpdateStatus(id, status)
+func (s *EmergencyService) ListEmergencies(page, size int, status string) ([]model.Emergency, int64, error) {
+	return s.repo.ListEmergencies(page, size, status)
 }
 
-// GetHistory 获取事件历史
-func (s *EmergencyService) GetHistory(userID uint) ([]*model.Emergency, error) {
-	return s.repo.GetHistory(userID)
+func (s *EmergencyService) UpdateEmergencyStatus(id uint, status string) error {
+	if status != "pending" && status != "processing" && status != "completed" && status != "cancelled" {
+		return errors.New("无效的状态")
+	}
+	return s.repo.UpdateEmergencyStatus(id, status)
 }
 
-// CreateHandlingRecord 创建处理记录
-func (s *EmergencyService) CreateHandlingRecord(req *model.CreateHandlingRecordRequest) (*model.HandlingRecord, error) {
+func (s *EmergencyService) CreateHandlingRecord(req *model.CreateHandlingRecordRequest, emergencyID, staffID uint) (*model.HandlingRecord, error) {
 	record := &model.HandlingRecord{
-		EventID:     req.EventID,
-		StaffID:     req.StaffID,
+		EmergencyID: emergencyID,
+		StaffID:     staffID,
 		Action:      req.Action,
 		Description: req.Description,
+		Status:      req.Status,
 		CreatedAt:   time.Now(),
 	}
 
-	return s.repo.CreateHandlingRecord(record)
+	if err := s.repo.CreateHandlingRecord(record); err != nil {
+		return nil, err
+	}
+
+	return record, nil
 }
 
-// GetHandlingRecords 获取处理记录
-func (s *EmergencyService) GetHandlingRecords(eventID string) ([]*model.HandlingRecord, error) {
-	return s.repo.GetHandlingRecords(eventID)
+func (s *EmergencyService) ListHandlingRecords(emergencyID uint) ([]model.HandlingRecord, error) {
+	return s.repo.ListHandlingRecords(emergencyID)
+}
+
+func (s *EmergencyService) AssignStaff(emergencyID, staffID uint) error {
+	emergency, err := s.repo.GetEmergencyByID(emergencyID)
+	if err != nil {
+		return err
+	}
+
+	if emergency.Status != "pending" {
+		return errors.New("该事件已被处理")
+	}
+
+	emergency.StaffID = staffID
+	emergency.Status = "processing"
+	return s.repo.UpdateEmergency(emergency)
+}
+
+func (s *EmergencyService) CompleteEmergency(emergencyID uint) error {
+	emergency, err := s.repo.GetEmergencyByID(emergencyID)
+	if err != nil {
+		return err
+	}
+
+	if emergency.Status != "processing" {
+		return errors.New("该事件状态不正确")
+	}
+
+	emergency.Status = "completed"
+	emergency.EndTime = time.Now()
+	return s.repo.UpdateEmergency(emergency)
 }

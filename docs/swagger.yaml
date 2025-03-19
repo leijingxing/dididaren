@@ -1,0 +1,1258 @@
+basePath: /api/v1
+definitions:
+  model.CreateConfigRequest:
+    properties:
+      key:
+        type: string
+      remark:
+        type: string
+      type:
+        enum:
+        - string
+        - number
+        - boolean
+        - json
+        type: string
+      value:
+        type: string
+    required:
+    - key
+    - type
+    - value
+    type: object
+  model.CreateDangerZoneRequest:
+    properties:
+      description:
+        type: string
+      latitude:
+        type: number
+      level:
+        enum:
+        - low
+        - medium
+        - high
+        type: string
+      longitude:
+        type: number
+      name:
+        type: string
+      radius:
+        minimum: 0
+        type: number
+    required:
+    - latitude
+    - level
+    - longitude
+    - name
+    - radius
+    type: object
+  model.CreateEmergencyRequest:
+    properties:
+      description:
+        type: string
+      latitude:
+        type: number
+      level:
+        enum:
+        - low
+        - medium
+        - high
+        type: string
+      location:
+        type: string
+      longitude:
+        type: number
+      title:
+        type: string
+    required:
+    - latitude
+    - level
+    - location
+    - longitude
+    - title
+    type: object
+  model.CreateHandlingRecordRequest:
+    properties:
+      action:
+        type: string
+      description:
+        type: string
+      status:
+        enum:
+        - pending
+        - processing
+        - completed
+        - cancelled
+        type: string
+    required:
+    - action
+    - status
+    type: object
+  model.CreateRatingRequest:
+    properties:
+      comment:
+        maxLength: 500
+        type: string
+      is_public:
+        type: boolean
+      order_id:
+        type: integer
+      score:
+        maximum: 5
+        minimum: 1
+        type: number
+      staff_id:
+        type: integer
+    required:
+    - order_id
+    - score
+    - staff_id
+    type: object
+  model.CreateStaffRequest:
+    properties:
+      id_card:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    required:
+    - id_card
+    - name
+    - phone
+    type: object
+  model.LoginRequest:
+    properties:
+      password:
+        type: string
+      phone:
+        type: string
+    required:
+    - password
+    - phone
+    type: object
+  model.RegisterRequest:
+    properties:
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - name
+    - password
+    - phone
+    type: object
+  model.UpdateConfigRequest:
+    properties:
+      remark:
+        type: string
+      type:
+        enum:
+        - string
+        - number
+        - boolean
+        - json
+        type: string
+      value:
+        type: string
+    required:
+    - type
+    - value
+    type: object
+  model.UpdateDangerZoneRequest:
+    properties:
+      description:
+        type: string
+      is_active:
+        type: boolean
+      latitude:
+        type: number
+      level:
+        enum:
+        - low
+        - medium
+        - high
+        type: string
+      longitude:
+        type: number
+      name:
+        type: string
+      radius:
+        minimum: 0
+        type: number
+    type: object
+  model.UpdateProfileRequest:
+    properties:
+      avatar:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 滴滴打人服务 API 文档
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: 滴滴打人 API
+  version: "1.0"
+paths:
+  /danger-zone:
+    get:
+      consumes:
+      - application/json
+      description: 获取危险区域列表，支持分页和筛选
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: size
+        type: integer
+      - description: 危险等级
+        in: query
+        name: level
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取危险区域列表
+      tags:
+      - 危险区域
+    post:
+      consumes:
+      - application/json
+      description: 创建新的危险区域
+      parameters:
+      - description: 危险区域信息
+        in: body
+        name: zone
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateDangerZoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建危险区域
+      tags:
+      - 危险区域
+  /danger-zone/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的危险区域
+      parameters:
+      - description: 危险区域ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除危险区域
+      tags:
+      - 危险区域
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取危险区域详情
+      parameters:
+      - description: 危险区域ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取危险区域
+      tags:
+      - 危险区域
+    put:
+      consumes:
+      - application/json
+      description: 更新危险区域信息
+      parameters:
+      - description: 危险区域ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 危险区域信息
+        in: body
+        name: zone
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateDangerZoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 更新危险区域
+      tags:
+      - 危险区域
+  /danger-zone/check:
+    get:
+      consumes:
+      - application/json
+      description: 检查指定位置是否在危险区域内
+      parameters:
+      - description: 纬度
+        in: query
+        name: latitude
+        required: true
+        type: number
+      - description: 经度
+        in: query
+        name: longitude
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 检查位置
+      tags:
+      - 危险区域
+  /emergency:
+    get:
+      consumes:
+      - application/json
+      description: 获取紧急事件列表，支持分页和筛选
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: size
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      - description: 紧急程度
+        in: query
+        name: level
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取紧急事件列表
+      tags:
+      - 紧急事件
+    post:
+      consumes:
+      - application/json
+      description: 创建新的紧急事件
+      parameters:
+      - description: 紧急事件信息
+        in: body
+        name: emergency
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateEmergencyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建紧急事件
+      tags:
+      - 紧急事件
+  /emergency/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取紧急事件详情
+      parameters:
+      - description: 事件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取紧急事件
+      tags:
+      - 紧急事件
+  /emergency/{id}/handling:
+    get:
+      consumes:
+      - application/json
+      description: 获取紧急事件的处理记录列表
+      parameters:
+      - description: 事件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取处理记录
+      tags:
+      - 紧急事件
+    post:
+      consumes:
+      - application/json
+      description: 为紧急事件创建处理记录
+      parameters:
+      - description: 事件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 处理记录信息
+        in: body
+        name: record
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateHandlingRecordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建处理记录
+      tags:
+      - 紧急事件
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录并获取token
+      parameters:
+      - description: 用户登录信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 用户登录
+      tags:
+      - 用户
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: 注册新用户
+      parameters:
+      - description: 用户注册信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 用户注册
+      tags:
+      - 用户
+  /security/rating:
+    get:
+      consumes:
+      - application/json
+      description: 获取安保人员的评价列表
+      parameters:
+      - description: 安保人员ID
+        in: query
+        name: staff_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取评价列表
+      tags:
+      - 安保人员
+    post:
+      consumes:
+      - application/json
+      description: 为安保人员创建评价
+      parameters:
+      - description: 评价信息
+        in: body
+        name: rating
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateRatingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建评价
+      tags:
+      - 安保人员
+  /security/staff:
+    get:
+      consumes:
+      - application/json
+      description: 获取安保人员列表，支持分页和筛选
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: size
+        type: integer
+      - description: 状态
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取安保人员列表
+      tags:
+      - 安保人员
+    post:
+      consumes:
+      - application/json
+      description: 创建新的安保人员
+      parameters:
+      - description: 安保人员信息
+        in: body
+        name: staff
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateStaffRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建安保人员
+      tags:
+      - 安保人员
+  /security/staff/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取安保人员详情
+      parameters:
+      - description: 安保人员ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取安保人员
+      tags:
+      - 安保人员
+  /security/staff/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: 更新安保人员的工作状态
+      parameters:
+      - description: 安保人员ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 状态
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 更新安保人员状态
+      tags:
+      - 安保人员
+  /system/config:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的系统配置项
+      parameters:
+      - description: 配置信息
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 创建系统配置
+      tags:
+      - 系统配置
+  /system/config/{key}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的系统配置
+      parameters:
+      - description: 配置key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 删除系统配置
+      tags:
+      - 系统配置
+    get:
+      consumes:
+      - application/json
+      description: 根据key获取系统配置
+      parameters:
+      - description: 配置key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取系统配置
+      tags:
+      - 系统配置
+    put:
+      consumes:
+      - application/json
+      description: 更新系统配置信息
+      parameters:
+      - description: 配置key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: 配置信息
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 更新系统配置
+      tags:
+      - 系统配置
+  /system/configs:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有系统配置列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取所有系统配置
+      tags:
+      - 系统配置
+  /user/profile:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前登录用户的详细信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 获取用户信息
+      tags:
+      - 用户
+    put:
+      consumes:
+      - application/json
+      description: 更新当前登录用户的信息
+      parameters:
+      - description: 用户信息
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: 更新用户信息
+      tags:
+      - 用户
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

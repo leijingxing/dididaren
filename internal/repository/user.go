@@ -58,3 +58,24 @@ func (r *UserRepository) Update(user *model.User) error {
 func (r *UserRepository) UpdateLastLogin(id uint) error {
 	return r.db.Model(&model.User{}).Where("id = ?", id).Update("last_login", time.Now()).Error
 }
+
+func (r *UserRepository) Delete(id uint) error {
+	return r.db.Delete(&model.User{}, id).Error
+}
+
+func (r *UserRepository) List(page, size int) ([]model.User, int64, error) {
+	var users []model.User
+	var total int64
+
+	err := r.db.Model(&model.User{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.Offset((page - 1) * size).Limit(size).Find(&users).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}

@@ -3,7 +3,6 @@ package service
 import (
 	"dididaren/internal/model"
 	"dididaren/internal/repository"
-	"errors"
 )
 
 type RatingService struct {
@@ -11,54 +10,46 @@ type RatingService struct {
 }
 
 func NewRatingService(repo *repository.RatingRepository) *RatingService {
-	return &RatingService{
-		repo: repo,
-	}
+	return &RatingService{repo: repo}
 }
 
 // CreateRating 创建评价
-func (s *RatingService) CreateRating(rating *model.Rating) error {
-	if rating.Score < 1 || rating.Score > 5 {
-		return errors.New("评分必须在1-5之间")
+func (s *RatingService) CreateRating(req *model.CreateRatingRequest) (*model.Rating, error) {
+	rating := &model.Rating{
+		StaffID:  req.StaffID,
+		UserID:   req.UserID,
+		Score:    req.Score,
+		Comment:  req.Comment,
+		IsPublic: req.IsPublic,
 	}
-	if rating.EventID == 0 {
-		return errors.New("事件ID不能为空")
-	}
-	if rating.StaffID == 0 {
-		return errors.New("安保人员ID不能为空")
-	}
-	return s.repo.Create(rating)
+	return s.repo.CreateRating(rating)
 }
 
-// GetRating 获取评价信息
-func (s *RatingService) GetRating(id uint) (*model.Rating, error) {
-	return s.repo.GetByID(id)
+// GetRatingByID 根据ID获取评价
+func (s *RatingService) GetRatingByID(id uint) (*model.Rating, error) {
+	return s.repo.GetRatingByID(id)
 }
 
-// GetEventRating 获取事件相关的评价
-func (s *RatingService) GetEventRating(eventID uint) (*model.Rating, error) {
-	return s.repo.GetByEventID(eventID)
-}
-
-// GetStaffRatings 获取安保人员的所有评价
-func (s *RatingService) GetStaffRatings(staffID uint) ([]*model.Rating, error) {
-	return s.repo.GetStaffRatings(staffID)
-}
-
-// GetStaffAverageRating 获取安保人员的平均评分
-func (s *RatingService) GetStaffAverageRating(staffID uint) (float64, error) {
-	return s.repo.CalculateStaffAverageRating(staffID)
+// ListRatings 获取安保人员的评价列表
+func (s *RatingService) ListRatings(staffID uint) ([]*model.Rating, error) {
+	return s.repo.ListRatings(staffID)
 }
 
 // UpdateRating 更新评价
-func (s *RatingService) UpdateRating(rating *model.Rating) error {
-	if rating.Score < 1 || rating.Score > 5 {
-		return errors.New("评分必须在1-5之间")
+func (s *RatingService) UpdateRating(id uint, req *model.CreateRatingRequest) error {
+	rating, err := s.repo.GetRatingByID(id)
+	if err != nil {
+		return err
 	}
-	return s.repo.Update(rating)
+
+	rating.Score = req.Score
+	rating.Comment = req.Comment
+	rating.IsPublic = req.IsPublic
+
+	return s.repo.UpdateRating(rating)
 }
 
 // DeleteRating 删除评价
 func (s *RatingService) DeleteRating(id uint) error {
-	return s.repo.Delete(id)
+	return s.repo.DeleteRating(id)
 }

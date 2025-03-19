@@ -6,87 +6,71 @@ import (
 	"gorm.io/gorm"
 )
 
-// Emergency 紧急事件
+// Emergency 紧急事件模型
 type Emergency struct {
-	ID          uint           `gorm:"primarykey" json:"id"`
-	UserID      uint           `gorm:"not null" json:"user_id"`
-	EventType   int8           `gorm:"not null" json:"event_type"`    // 1:普通求助 2:家庭暴力 3:医疗急救 4:诈骗干预
-	Status      string         `gorm:"default:pending" json:"status"` // pending: 待处理 processing: 处理中 completed: 已完成 cancelled: 已取消
-	LocationLat float64        `gorm:"not null" json:"location_lat"`
-	LocationLng float64        `gorm:"not null" json:"location_lng"`
-	Address     string         `gorm:"size:255" json:"address"`
-	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	gorm.Model
+	UserID      uint      `gorm:"not null" json:"user_id"`
+	Title       string    `gorm:"size:100;not null" json:"title"`
+	Description string    `gorm:"type:text" json:"description"`
+	Location    string    `gorm:"size:200;not null" json:"location"`
+	Latitude    float64   `gorm:"not null" json:"latitude"`
+	Longitude   float64   `gorm:"not null" json:"longitude"`
+	Level       string    `gorm:"size:20;not null" json:"level"` // low, medium, high
+	Status      string    `gorm:"size:20;not null;default:'pending'" json:"status"` // pending, processing, completed, cancelled
+	StaffID     uint      `json:"staff_id"`
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
 }
 
-// EmergencyContact 紧急联系人
-type EmergencyContact struct {
-	ID           uint           `gorm:"primarykey" json:"id"`
-	UserID       uint           `gorm:"not null" json:"user_id"`
-	Name         string         `gorm:"size:50;not null" json:"name"`
-	Phone        string         `gorm:"size:20;not null" json:"phone"`
-	Relationship string         `gorm:"size:20" json:"relationship"`
-	CreatedAt    time.Time      `json:"created_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
-}
-
-// HandlingRecord 事件处理记录
-type HandlingRecord struct {
-	ID          uint           `gorm:"primarykey" json:"id"`
-	EventID     uint           `gorm:"not null" json:"event_id"`
-	StaffID     uint           `gorm:"not null" json:"staff_id"`
-	Action      string         `gorm:"not null" json:"action"` // accept: 接单 arrive: 到达 complete: 完成
-	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `json:"created_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
-}
-
-// DangerZone 危险区域
-type DangerZone struct {
-	ID          uint           `gorm:"primarykey" json:"id"`
-	Name        string         `gorm:"size:100;not null" json:"name"`
-	LocationLat float64        `gorm:"not null" json:"location_lat"`
-	LocationLng float64        `gorm:"not null" json:"location_lng"`
-	Radius      int            `json:"radius"`                       // 危险区域半径(米)
-	DangerLevel int8           `gorm:"not null" json:"danger_level"` // 1:低 2:中 3:高
-	Description string         `gorm:"type:text" json:"description"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
-}
-
-// CreateEmergencyRequest 创建紧急事件请求
-type CreateEmergencyRequest struct {
-	UserID      uint    `json:"user_id"`
-	EventType   int8    `json:"event_type" binding:"required"`
-	LocationLat float64 `json:"location_lat" binding:"required"`
-	LocationLng float64 `json:"location_lng" binding:"required"`
-	Address     string  `json:"address"`
-	Description string  `json:"description"`
-}
-
-// CreateHandlingRecordRequest 创建处理记录请求
-type CreateHandlingRecordRequest struct {
-	EventID     uint   `json:"event_id" binding:"required"`
-	StaffID     uint   `json:"staff_id" binding:"required"`
-	Action      string `json:"action" binding:"required"`
-	Description string `json:"description"`
-}
-
+// TableName 指定表名
 func (Emergency) TableName() string {
 	return "emergencies"
 }
 
+// CreateEmergencyRequest 创建紧急事件请求
+type CreateEmergencyRequest struct {
+	Title       string  `json:"title" binding:"required"`
+	Description string  `json:"description"`
+	Location    string  `json:"location" binding:"required"`
+	Latitude    float64 `json:"latitude" binding:"required"`
+	Longitude   float64 `json:"longitude" binding:"required"`
+	Level       string  `json:"level" binding:"required,oneof=low medium high"`
+}
+
+// EmergencyContact 紧急联系人模型
+type EmergencyContact struct {
+	gorm.Model
+	UserID      uint   `gorm:"not null" json:"user_id"`
+	Name        string `gorm:"size:50;not null" json:"name"`
+	Phone       string `gorm:"size:20;not null" json:"phone"`
+	Relation    string `gorm:"size:50" json:"relation"`
+	IsDefault   bool   `gorm:"default:false" json:"is_default"`
+}
+
+// TableName 指定表名
 func (EmergencyContact) TableName() string {
 	return "emergency_contacts"
 }
 
+// HandlingRecord 处理记录模型
+type HandlingRecord struct {
+	gorm.Model
+	EmergencyID uint      `gorm:"not null" json:"emergency_id"`
+	StaffID     uint      `gorm:"not null" json:"staff_id"`
+	Action      string    `gorm:"size:50;not null" json:"action"`
+	Description string    `gorm:"type:text" json:"description"`
+	Status      string    `gorm:"size:20;not null" json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// TableName 指定表名
 func (HandlingRecord) TableName() string {
 	return "handling_records"
 }
 
-func (DangerZone) TableName() string {
-	return "danger_zones"
+// CreateHandlingRecordRequest 创建处理记录请求
+type CreateHandlingRecordRequest struct {
+	Action      string `json:"action" binding:"required"`
+	Description string `json:"description"`
+	Status      string `json:"status" binding:"required,oneof=pending processing completed cancelled"`
 }

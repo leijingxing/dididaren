@@ -18,7 +18,19 @@ func NewSystemConfigHandler(service *service.SystemConfigService) *SystemConfigH
 	}
 }
 
-// GetConfig 获取配置信息
+// GetConfig godoc
+// @Summary      获取系统配置
+// @Description  根据key获取系统配置
+// @Tags         系统配置
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        key  path      string  true  "配置key"
+// @Success      200  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /system/config/{key} [get]
 func (h *SystemConfigHandler) GetConfig(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
@@ -26,7 +38,7 @@ func (h *SystemConfigHandler) GetConfig(c *gin.Context) {
 		return
 	}
 
-	config, err := h.service.GetConfig(key)
+	config, err := h.service.GetByKey(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -40,39 +52,86 @@ func (h *SystemConfigHandler) GetConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": config})
 }
 
-// CreateConfig 创建配置
+// CreateConfig godoc
+// @Summary      创建系统配置
+// @Description  创建新的系统配置项
+// @Tags         系统配置
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        config  body      model.CreateConfigRequest  true  "配置信息"
+// @Success      200     {object}  map[string]interface{}
+// @Failure      400     {object}  map[string]interface{}
+// @Failure      401     {object}  map[string]interface{}
+// @Failure      500     {object}  map[string]interface{}
+// @Router       /system/config [post]
 func (h *SystemConfigHandler) CreateConfig(c *gin.Context) {
-	var config model.SystemConfig
-	if err := c.ShouldBindJSON(&config); err != nil {
+	var req model.CreateConfigRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.service.CreateConfig(&config); err != nil {
+	config, err := h.service.Create(req.Key, req.Value, req.Type, req.Remark)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "创建成功", "data": config})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "创建成功",
+		"data":    config,
+	})
 }
 
-// UpdateConfig 更新配置
+// UpdateConfig godoc
+// @Summary      更新系统配置
+// @Description  更新系统配置信息
+// @Tags         系统配置
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        key     path      string                    true  "配置key"
+// @Param        config  body      model.UpdateConfigRequest  true  "配置信息"
+// @Success      200     {object}  map[string]interface{}
+// @Failure      400     {object}  map[string]interface{}
+// @Failure      401     {object}  map[string]interface{}
+// @Failure      404     {object}  map[string]interface{}
+// @Failure      500     {object}  map[string]interface{}
+// @Router       /system/config/{key} [put]
 func (h *SystemConfigHandler) UpdateConfig(c *gin.Context) {
-	var config model.SystemConfig
-	if err := c.ShouldBindJSON(&config); err != nil {
+	key := c.Param("key")
+	var req model.UpdateConfigRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.service.UpdateConfig(&config); err != nil {
+	config, err := h.service.Update(key, req.Value, req.Type, req.Remark)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "更新成功", "data": config})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "更新成功",
+		"data":    config,
+	})
 }
 
-// DeleteConfig 删除配置
+// DeleteConfig godoc
+// @Summary      删除系统配置
+// @Description  删除指定的系统配置
+// @Tags         系统配置
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        key  path      string  true  "配置key"
+// @Success      200  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /system/config/{key} [delete]
 func (h *SystemConfigHandler) DeleteConfig(c *gin.Context) {
 	key := c.Param("key")
 	if key == "" {
@@ -80,7 +139,7 @@ func (h *SystemConfigHandler) DeleteConfig(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteConfig(key); err != nil {
+	if err := h.service.Delete(key); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -88,9 +147,19 @@ func (h *SystemConfigHandler) DeleteConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-// GetAllConfigs 获取所有配置
-func (h *SystemConfigHandler) GetAllConfigs(c *gin.Context) {
-	configs, err := h.service.GetAllConfigs()
+// ListConfigs godoc
+// @Summary      获取所有系统配置
+// @Description  获取所有系统配置列表
+// @Tags         系统配置
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /system/configs [get]
+func (h *SystemConfigHandler) ListConfigs(c *gin.Context) {
+	configs, err := h.service.List()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -107,7 +176,7 @@ func (h *SystemConfigHandler) GetConfigValue(c *gin.Context) {
 		return
 	}
 
-	value, err := h.service.GetConfigValue(key)
+	value, err := h.service.GetValue(key)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -132,7 +201,7 @@ func (h *SystemConfigHandler) UpdateConfigValue(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateConfigValue(key, req.Value); err != nil {
+	if err := h.service.UpdateValue(key, req.Value); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

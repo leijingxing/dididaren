@@ -14,131 +14,150 @@ type RatingHandler struct {
 }
 
 func NewRatingHandler(service *service.RatingService) *RatingHandler {
-	return &RatingHandler{
-		service: service,
-	}
+	return &RatingHandler{service: service}
 }
 
 // CreateRating 创建评价
+// @Summary 创建评价
+// @Description 创建一条新的评价
+// @Tags 评价
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer 用户令牌"
+// @Param request body model.CreateRatingRequest true "评价信息"
+// @Success 200 {object} model.Rating
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/ratings [post]
 func (h *RatingHandler) CreateRating(c *gin.Context) {
-	var rating model.Rating
-	if err := c.ShouldBindJSON(&rating); err != nil {
+	var req model.CreateRatingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.service.CreateRating(&rating); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	rating, err := h.service.CreateRating(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "创建成功", "data": rating})
+	c.JSON(http.StatusOK, rating)
 }
 
-// GetRating 获取评价信息
+// GetRating 获取评价详情
+// @Summary 获取评价详情
+// @Description 根据ID获取评价详情
+// @Tags 评价
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer 用户令牌"
+// @Param id path int true "评价ID"
+// @Success 200 {object} model.Rating
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/ratings/{id} [get]
 func (h *RatingHandler) GetRating(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
 		return
 	}
 
-	rating, err := h.service.GetRating(uint(id))
+	rating, err := h.service.GetRatingByID(uint(id))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if rating == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "未找到该评价"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": rating})
+	c.JSON(http.StatusOK, rating)
 }
 
-// GetEventRating 获取事件相关的评价
-func (h *RatingHandler) GetEventRating(c *gin.Context) {
-	eventID, err := strconv.ParseUint(c.Param("event_id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的事件ID"})
-		return
-	}
-
-	rating, err := h.service.GetEventRating(uint(eventID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if rating == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "未找到该事件的评价"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": rating})
-}
-
-// GetStaffRatings 获取安保人员的所有评价
-func (h *RatingHandler) GetStaffRatings(c *gin.Context) {
-	staffID, err := strconv.ParseUint(c.Param("staff_id"), 10, 32)
+// ListRatings 获取评价列表
+// @Summary 获取评价列表
+// @Description 获取安保人员的所有评价
+// @Tags 评价
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer 用户令牌"
+// @Param staff_id query int true "安保人员ID"
+// @Success 200 {array} model.Rating
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/ratings [get]
+func (h *RatingHandler) ListRatings(c *gin.Context) {
+	staffID, err := strconv.ParseUint(c.Query("staff_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的安保人员ID"})
 		return
 	}
 
-	ratings, err := h.service.GetStaffRatings(uint(staffID))
+	ratings, err := h.service.ListRatings(uint(staffID))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": ratings})
-}
-
-// GetStaffAverageRating 获取安保人员的平均评分
-func (h *RatingHandler) GetStaffAverageRating(c *gin.Context) {
-	staffID, err := strconv.ParseUint(c.Param("staff_id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的安保人员ID"})
-		return
-	}
-
-	avgRating, err := h.service.GetStaffAverageRating(uint(staffID))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": gin.H{"average_rating": avgRating}})
+	c.JSON(http.StatusOK, ratings)
 }
 
 // UpdateRating 更新评价
+// @Summary 更新评价
+// @Description 更新评价信息
+// @Tags 评价
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer 用户令牌"
+// @Param id path int true "评价ID"
+// @Param request body model.CreateRatingRequest true "评价信息"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/ratings/{id} [put]
 func (h *RatingHandler) UpdateRating(c *gin.Context) {
-	var rating model.Rating
-	if err := c.ShouldBindJSON(&rating); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.UpdateRating(&rating); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "更新成功", "data": rating})
-}
-
-// DeleteRating 删除评价
-func (h *RatingHandler) DeleteRating(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
 		return
 	}
 
-	if err := h.service.DeleteRating(uint(id)); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	var req model.CreateRatingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = h.service.UpdateRating(uint(id), &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "更新成功"})
+}
+
+// DeleteRating 删除评价
+// @Summary 删除评价
+// @Description 删除指定的评价
+// @Tags 评价
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer 用户令牌"
+// @Param id path int true "评价ID"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /api/v1/ratings/{id} [delete]
+func (h *RatingHandler) DeleteRating(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
+		return
+	}
+
+	err = h.service.DeleteRating(uint(id))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

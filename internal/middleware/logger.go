@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"dididaren/pkg/logger"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,22 +11,22 @@ import (
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 开始时间
-		start := time.Now()
+		startTime := time.Now()
 
 		// 处理请求
 		c.Next()
 
 		// 结束时间
-		end := time.Now()
+		endTime := time.Now()
 
 		// 执行时间
-		latency := end.Sub(start)
+		latencyTime := endTime.Sub(startTime)
 
 		// 请求方式
-		method := c.Request.Method
+		reqMethod := c.Request.Method
 
 		// 请求路由
-		path := c.Request.URL.Path
+		reqUri := c.Request.RequestURI
 
 		// 状态码
 		statusCode := c.Writer.Status()
@@ -34,13 +34,14 @@ func Logger() gin.HandlerFunc {
 		// 请求IP
 		clientIP := c.ClientIP()
 
-		// 记录日志
-		logger.Info("HTTP Request",
-			"method", method,
-			"path", path,
-			"status", statusCode,
-			"latency", latency,
-			"client_ip", clientIP,
+		// 日志格式
+		fmt.Printf("[GIN] %s | %3d | %13v | %15s | %s | %s\n",
+			startTime.Format("2006-01-02 15:04:05"),
+			statusCode,
+			latencyTime,
+			clientIP,
+			reqMethod,
+			reqUri,
 		)
 	}
 }

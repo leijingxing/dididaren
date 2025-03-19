@@ -11,46 +11,60 @@ type DangerZoneRepository struct {
 }
 
 func NewDangerZoneRepository(db *gorm.DB) *DangerZoneRepository {
-	return &DangerZoneRepository{
-		db: db,
-	}
+	return &DangerZoneRepository{db: db}
 }
 
-// Create 创建危险区域
-func (r *DangerZoneRepository) Create(zone *model.DangerZone) error {
+// CreateDangerZone 创建危险区域
+func (r *DangerZoneRepository) CreateDangerZone(zone *model.DangerZone) error {
 	return r.db.Create(zone).Error
 }
 
-// GetByID 根据ID获取危险区域
-func (r *DangerZoneRepository) GetByID(id uint) (*model.DangerZone, error) {
+// GetDangerZoneByID 根据ID获取危险区域
+func (r *DangerZoneRepository) GetDangerZoneByID(id uint) (*model.DangerZone, error) {
 	var zone model.DangerZone
 	err := r.db.First(&zone, id).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return &zone, nil
 }
 
-// Update 更新危险区域信息
-func (r *DangerZoneRepository) Update(zone *model.DangerZone) error {
+// ListDangerZones 获取危险区域列表
+func (r *DangerZoneRepository) ListDangerZones(page, size int) ([]model.DangerZone, int64, error) {
+	var zones []model.DangerZone
+	var total int64
+
+	err := r.db.Model(&model.DangerZone{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = r.db.Offset((page - 1) * size).Limit(size).Find(&zones).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return zones, total, nil
+}
+
+// UpdateDangerZone 更新危险区域
+func (r *DangerZoneRepository) UpdateDangerZone(zone *model.DangerZone) error {
 	return r.db.Save(zone).Error
 }
 
-// Delete 删除危险区域
-func (r *DangerZoneRepository) Delete(id uint) error {
+// DeleteDangerZone 删除危险区域
+func (r *DangerZoneRepository) DeleteDangerZone(id uint) error {
 	return r.db.Delete(&model.DangerZone{}, id).Error
 }
 
-// GetNearbyZones 获取附近的危险区域
-func (r *DangerZoneRepository) GetNearbyZones(latitude, longitude float64, radius float64) ([]*model.DangerZone, error) {
-	var zones []*model.DangerZone
+// GetNearbyDangerZones 获取附近的危险区域
+func (r *DangerZoneRepository) GetNearbyDangerZones(lat, lng float64) ([]model.DangerZone, error) {
+	var zones []model.DangerZone
+	// 这里使用简单的经纬度范围查询，实际项目中可能需要使用更复杂的空间查询
+	// 例如使用 MySQL 的空间索引和 ST_Distance_Sphere 函数
 	err := r.db.Where("latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?",
-		latitude-radius, latitude+radius,
-		longitude-radius, longitude+radius,
-	).Find(&zones).Error
+		lat-0.1, lat+0.1, lng-0.1, lng+0.1).
+		Find(&zones).Error
 	if err != nil {
 		return nil, err
 	}

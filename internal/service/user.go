@@ -4,7 +4,6 @@ import (
 	"dididaren/internal/model"
 	"dididaren/internal/repository"
 	"errors"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,30 +13,27 @@ type UserService struct {
 }
 
 func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{
-		repo: repo,
-	}
+	return &UserService{repo: repo}
 }
 
 // Register 用户注册
 func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) {
 	// 检查手机号是否已注册
-	if s.repo.ExistsByPhone(req.Phone) {
-		return nil, errors.New("该手机号已注册")
+	existingUser, err := s.repo.GetByPhone(req.Phone)
+	if err == nil && existingUser != nil {
+		return nil, errors.New("手机号已注册")
 	}
 
-	// 密码加密
+	// 加密密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 
 	user := &model.User{
-		Phone:     req.Phone,
-		Password:  string(hashedPassword),
-		Name:      req.Name,
-		Status:    1,
-		LastLogin: time.Now(),
+		Name:     req.Name,
+		Phone:    req.Phone,
+		Password: string(hashedPassword),
 	}
 
 	if err := s.repo.Create(user); err != nil {
@@ -73,18 +69,24 @@ func (s *UserService) Login(req *model.LoginRequest) (*model.User, error) {
 }
 
 // GetProfile 获取用户信息
-func (s *UserService) GetProfile(id uint) (*model.User, error) {
-	return s.repo.GetByID(id)
+func (s *UserService) GetProfile(userID uint) (*model.User, error) {
+	user, err := s.repo.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // UpdateProfile 更新用户信息
-func (s *UserService) UpdateProfile(id uint, req *model.UpdateProfileRequest) (*model.User, error) {
-	user, err := s.repo.GetByID(id)
+func (s *UserService) UpdateProfile(userID uint, req *model.UpdateProfileRequest) (*model.User, error) {
+	user, err := s.repo.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	user.Name = req.Name
+	if req.Name != "" {
+		user.Name = req.Name
+	}
 	if req.Avatar != "" {
 		user.Avatar = req.Avatar
 	}
@@ -94,4 +96,12 @@ func (s *UserService) UpdateProfile(id uint, req *model.UpdateProfileRequest) (*
 	}
 
 	return user, nil
+}
+
+func (s *UserService) List(page, size int) ([]model.User, int64, error) {
+	return s.repo.List(page, size)
+}
+
+func (s *UserService) Delete(userID uint) error {
+	return s.repo.Delete(userID)
 }

@@ -11,24 +11,23 @@ type RatingRepository struct {
 }
 
 func NewRatingRepository(db *gorm.DB) *RatingRepository {
-	return &RatingRepository{
-		db: db,
+	return &RatingRepository{db: db}
+}
+
+// CreateRating 创建评价
+func (r *RatingRepository) CreateRating(rating *model.Rating) (*model.Rating, error) {
+	err := r.db.Create(rating).Error
+	if err != nil {
+		return nil, err
 	}
+	return rating, nil
 }
 
-// Create 创建评价
-func (r *RatingRepository) Create(rating *model.Rating) error {
-	return r.db.Create(rating).Error
-}
-
-// GetByID 根据ID获取评价
-func (r *RatingRepository) GetByID(id uint) (*model.Rating, error) {
+// GetRatingByID 根据ID获取评价
+func (r *RatingRepository) GetRatingByID(id uint) (*model.Rating, error) {
 	var rating model.Rating
 	err := r.db.First(&rating, id).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
 		return nil, err
 	}
 	return &rating, nil
@@ -47,8 +46,8 @@ func (r *RatingRepository) GetByEventID(eventID uint) (*model.Rating, error) {
 	return &rating, nil
 }
 
-// GetStaffRatings 获取安保人员的所有评价
-func (r *RatingRepository) GetStaffRatings(staffID uint) ([]*model.Rating, error) {
+// ListRatings 获取安保人员的评价列表
+func (r *RatingRepository) ListRatings(staffID uint) ([]*model.Rating, error) {
 	var ratings []*model.Rating
 	err := r.db.Where("staff_id = ?", staffID).Find(&ratings).Error
 	if err != nil {
@@ -70,12 +69,12 @@ func (r *RatingRepository) CalculateStaffAverageRating(staffID uint) (float64, e
 	return avg, nil
 }
 
-// Update 更新评价
-func (r *RatingRepository) Update(rating *model.Rating) error {
+// UpdateRating 更新评价
+func (r *RatingRepository) UpdateRating(rating *model.Rating) error {
 	return r.db.Save(rating).Error
 }
 
-// Delete 删除评价
-func (r *RatingRepository) Delete(id uint) error {
+// DeleteRating 删除评价
+func (r *RatingRepository) DeleteRating(id uint) error {
 	return r.db.Delete(&model.Rating{}, id).Error
 }

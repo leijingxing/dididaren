@@ -3,7 +3,6 @@ package service
 import (
 	"dididaren/internal/model"
 	"dididaren/internal/repository"
-	"errors"
 )
 
 type DangerZoneService struct {
@@ -11,72 +10,77 @@ type DangerZoneService struct {
 }
 
 func NewDangerZoneService(repo *repository.DangerZoneRepository) *DangerZoneService {
-	return &DangerZoneService{
-		repo: repo,
-	}
+	return &DangerZoneService{repo: repo}
 }
 
 // CreateDangerZone 创建危险区域
-func (s *DangerZoneService) CreateDangerZone(zone *model.DangerZone) error {
-	if zone.Latitude < -90 || zone.Latitude > 90 {
-		return errors.New("纬度范围无效")
+func (s *DangerZoneService) CreateDangerZone(req *model.CreateDangerZoneRequest) error {
+	zone := &model.DangerZone{
+		Name:        req.Name,
+		Description: req.Description,
+		Level:       req.Level,
+		Latitude:    req.Latitude,
+		Longitude:   req.Longitude,
+		Radius:      req.Radius,
 	}
-	if zone.Longitude < -180 || zone.Longitude > 180 {
-		return errors.New("经度范围无效")
-	}
-	if zone.Radius <= 0 {
-		return errors.New("半径必须大于0")
-	}
-	return s.repo.Create(zone)
+
+	return s.repo.CreateDangerZone(zone)
 }
 
-// GetDangerZone 获取危险区域信息
-func (s *DangerZoneService) GetDangerZone(id uint) (*model.DangerZone, error) {
-	return s.repo.GetByID(id)
+// GetDangerZoneByID 根据ID获取危险区域
+func (s *DangerZoneService) GetDangerZoneByID(id uint) (*model.DangerZone, error) {
+	return s.repo.GetDangerZoneByID(id)
 }
 
-// UpdateDangerZone 更新危险区域信息
-func (s *DangerZoneService) UpdateDangerZone(zone *model.DangerZone) error {
-	if zone.Latitude < -90 || zone.Latitude > 90 {
-		return errors.New("纬度范围无效")
+// ListDangerZones 获取危险区域列表
+func (s *DangerZoneService) ListDangerZones(page, size int) ([]model.DangerZone, int64, error) {
+	return s.repo.ListDangerZones(page, size)
+}
+
+// UpdateDangerZone 更新危险区域
+func (s *DangerZoneService) UpdateDangerZone(id uint, req *model.UpdateDangerZoneRequest) error {
+	zone, err := s.repo.GetDangerZoneByID(id)
+	if err != nil {
+		return err
 	}
-	if zone.Longitude < -180 || zone.Longitude > 180 {
-		return errors.New("经度范围无效")
+
+	if req.Name != "" {
+		zone.Name = req.Name
 	}
-	if zone.Radius <= 0 {
-		return errors.New("半径必须大于0")
+	if req.Description != "" {
+		zone.Description = req.Description
 	}
-	return s.repo.Update(zone)
+	if req.Level != "" {
+		zone.Level = req.Level
+	}
+	if req.Latitude != 0 {
+		zone.Latitude = req.Latitude
+	}
+	if req.Longitude != 0 {
+		zone.Longitude = req.Longitude
+	}
+	if req.Radius != 0 {
+		zone.Radius = req.Radius
+	}
+
+	return s.repo.UpdateDangerZone(zone)
 }
 
 // DeleteDangerZone 删除危险区域
 func (s *DangerZoneService) DeleteDangerZone(id uint) error {
-	return s.repo.Delete(id)
+	return s.repo.DeleteDangerZone(id)
 }
 
-// GetNearbyZones 获取附近的危险区域
-func (s *DangerZoneService) GetNearbyZones(latitude, longitude float64, radius float64) ([]*model.DangerZone, error) {
-	if latitude < -90 || latitude > 90 {
-		return nil, errors.New("纬度范围无效")
+// CheckLocationInDangerZone 检查位置是否在危险区域内
+func (s *DangerZoneService) CheckLocationInDangerZone(lat, lng float64) (bool, []model.DangerZone, error) {
+	zones, err := s.repo.GetNearbyDangerZones(lat, lng)
+	if err != nil {
+		return false, nil, err
 	}
-	if longitude < -180 || longitude > 180 {
-		return nil, errors.New("经度范围无效")
-	}
-	if radius <= 0 {
-		return nil, errors.New("搜索半径必须大于0")
-	}
-	return s.repo.GetNearbyZones(latitude, longitude, radius)
-}
 
-// GetAllActiveZones 获取所有活跃的危险区域
-func (s *DangerZoneService) GetAllActiveZones() ([]*model.DangerZone, error) {
-	return s.repo.GetAllActiveZones()
-}
-
-// UpdateHeatLevel 更新危险区域的热度等级
-func (s *DangerZoneService) UpdateHeatLevel(id uint, heatLevel int) error {
-	if heatLevel < 0 || heatLevel > 5 {
-		return errors.New("热度等级必须在0-5之间")
+	if len(zones) > 0 {
+		return true, zones, nil
 	}
-	return s.repo.UpdateHeatLevel(id, heatLevel)
+
+	return false, nil, nil
 }
