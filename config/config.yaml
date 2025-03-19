@@ -1,0 +1,40 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  driver: mysql
+  host: 154.12.20.37
+  port: 3306
+  username: leiye
+  password: 123456
+  dbname: dididaren
+  charset: utf8mb4
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: your-secret-key
+  expire: 24h
+
+log:
+  level: debug
+  filename: ./logs/app.log
+  max_size: 100
+  max_age: 30
+  max_backups: 10
+
+oss:
+  endpoint: oss-cn-hangzhou.aliyuncs.com
+  access_key_id: your-access-key-id
+  access_key_secret: your-access-key-secret
+  bucket_name: your-bucket-name
+
+map:
+  amap_key: your-amap-key 

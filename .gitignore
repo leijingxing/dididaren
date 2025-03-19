@@ -1,0 +1,24 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 依赖
+/vendor/
+/go.sum
+
+# 日志
+/logs/
+*.log
+
+# 环境变量
+.env
+
+# 编译输出
+/bin/
+/dist/
+
+# 系统文件
+.DS_Store
+Thumbs.db 
