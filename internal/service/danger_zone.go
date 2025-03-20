@@ -84,3 +84,27 @@ func (s *DangerZoneService) CheckLocationInDangerZone(lat, lng float64) (bool, [
 
 	return false, nil, nil
 }
+
+// GetNearbyZones 获取附近的危险区域
+func (s *DangerZoneService) GetNearbyZones(latitude, longitude, radius float64) ([]model.DangerZone, error) {
+	return s.repo.GetNearbyDangerZones(latitude, longitude)
+}
+
+// GetAllActiveZones 获取所有活跃的危险区域
+func (s *DangerZoneService) GetAllActiveZones() ([]model.DangerZone, error) {
+	zones, err := s.repo.GetAllActiveZones()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []model.DangerZone
+	for _, zone := range zones {
+		result = append(result, *zone)
+	}
+	return result, nil
+}
+
+// UpdateHeatLevel 更新危险区域的热度等级
+func (s *DangerZoneService) UpdateHeatLevel(id uint, heatLevel int) error {
+	return s.repo.UpdateHeatLevel(id, heatLevel)
+}

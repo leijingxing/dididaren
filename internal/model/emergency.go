@@ -6,20 +6,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// Emergency 紧急事件模型
+// Emergency 紧急事件
 type Emergency struct {
-	gorm.Model
-	UserID      uint      `gorm:"not null" json:"user_id"`
-	Title       string    `gorm:"size:100;not null" json:"title"`
-	Description string    `gorm:"type:text" json:"description"`
-	Location    string    `gorm:"size:200;not null" json:"location"`
-	Latitude    float64   `gorm:"not null" json:"latitude"`
-	Longitude   float64   `gorm:"not null" json:"longitude"`
-	Level       string    `gorm:"size:20;not null" json:"level"` // low, medium, high
-	Status      string    `gorm:"size:20;not null;default:'pending'" json:"status"` // pending, processing, completed, cancelled
-	StaffID     uint      `json:"staff_id"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
+	ID          uint      `json:"id" gorm:"primaryKey"`
+	UserID      uint      `json:"user_id"`
+	Type        string    `json:"type"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Location    string    `json:"location"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	Status      int       `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // TableName 指定表名
@@ -29,22 +28,36 @@ func (Emergency) TableName() string {
 
 // CreateEmergencyRequest 创建紧急事件请求
 type CreateEmergencyRequest struct {
+	Type        string  `json:"type" binding:"required"`
 	Title       string  `json:"title" binding:"required"`
-	Description string  `json:"description"`
+	Description string  `json:"description" binding:"required"`
 	Location    string  `json:"location" binding:"required"`
 	Latitude    float64 `json:"latitude" binding:"required"`
 	Longitude   float64 `json:"longitude" binding:"required"`
-	Level       string  `json:"level" binding:"required,oneof=low medium high"`
+}
+
+// UpdateEmergencyRequest 更新紧急事件请求
+type UpdateEmergencyRequest struct {
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Location    string  `json:"location"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+}
+
+// UpdateEmergencyStatusRequest 更新紧急事件状态请求
+type UpdateEmergencyStatusRequest struct {
+	Status int `json:"status" binding:"required"`
 }
 
 // EmergencyContact 紧急联系人模型
 type EmergencyContact struct {
 	gorm.Model
-	UserID      uint   `gorm:"not null" json:"user_id"`
-	Name        string `gorm:"size:50;not null" json:"name"`
-	Phone       string `gorm:"size:20;not null" json:"phone"`
-	Relation    string `gorm:"size:50" json:"relation"`
-	IsDefault   bool   `gorm:"default:false" json:"is_default"`
+	UserID    uint   `gorm:"not null" json:"user_id"`
+	Name      string `gorm:"size:50;not null" json:"name"`
+	Phone     string `gorm:"size:20;not null" json:"phone"`
+	Relation  string `gorm:"size:50" json:"relation"`
+	IsDefault bool   `gorm:"default:false" json:"is_default"`
 }
 
 // TableName 指定表名
@@ -52,15 +65,15 @@ func (EmergencyContact) TableName() string {
 	return "emergency_contacts"
 }
 
-// HandlingRecord 处理记录模型
+// HandlingRecord 处理记录
 type HandlingRecord struct {
-	gorm.Model
-	EmergencyID uint      `gorm:"not null" json:"emergency_id"`
-	StaffID     uint      `gorm:"not null" json:"staff_id"`
-	Action      string    `gorm:"size:50;not null" json:"action"`
-	Description string    `gorm:"type:text" json:"description"`
-	Status      string    `gorm:"size:20;not null" json:"status"`
+	ID          uint      `json:"id" gorm:"primaryKey"`
+	EmergencyID uint      `json:"emergency_id"`
+	StaffID     uint      `json:"staff_id"`
+	Action      string    `json:"action"`
+	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // TableName 指定表名
@@ -71,6 +84,5 @@ func (HandlingRecord) TableName() string {
 // CreateHandlingRecordRequest 创建处理记录请求
 type CreateHandlingRecordRequest struct {
 	Action      string `json:"action" binding:"required"`
-	Description string `json:"description"`
-	Status      string `json:"status" binding:"required,oneof=pending processing completed cancelled"`
+	Description string `json:"description" binding:"required"`
 }

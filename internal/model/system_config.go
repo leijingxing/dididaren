@@ -1,34 +1,31 @@
 package model
 
 import (
-	"gorm.io/gorm"
+	"time"
 )
 
 // SystemConfig 系统配置模型
 type SystemConfig struct {
-	gorm.Model
-	Key    string `gorm:"size:50;not null;unique" json:"key"`
-	Value  string `gorm:"type:text" json:"value"`
-	Type   string `gorm:"size:20;not null" json:"type"` // string, number, boolean, json
-	Remark string `gorm:"size:200" json:"remark"`
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Key       string    `json:"key" gorm:"uniqueIndex;not null"`
+	Value     string    `json:"value" gorm:"not null"`
+	Type      string    `json:"type" gorm:"not null"`
+	Desc      string    `json:"desc"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// TableName 指定表名
-func (SystemConfig) TableName() string {
-	return "system_configs"
+// CreateSystemConfigRequest 创建系统配置请求
+type CreateSystemConfigRequest struct {
+	Key   string `json:"key" binding:"required"`
+	Value string `json:"value" binding:"required"`
+	Type  string `json:"type" binding:"required"`
+	Desc  string `json:"desc"`
 }
 
-// CreateConfigRequest 创建配置请求
-type CreateConfigRequest struct {
-	Key    string `json:"key" binding:"required"`
-	Value  string `json:"value" binding:"required"`
-	Type   string `json:"type" binding:"required,oneof=string number boolean json"`
-	Remark string `json:"remark"`
-}
-
-// UpdateConfigRequest 更新配置请求
-type UpdateConfigRequest struct {
-	Value  string `json:"value" binding:"required"`
-	Type   string `json:"type" binding:"required,oneof=string number boolean json"`
-	Remark string `json:"remark"`
+// UpdateSystemConfigRequest 更新系统配置请求
+type UpdateSystemConfigRequest struct {
+	Value string `json:"value" binding:"required"`
+	Type  string `json:"type" binding:"required"`
+	Desc  string `json:"desc"`
 }

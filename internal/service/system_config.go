@@ -11,21 +11,52 @@ type SystemConfigService struct {
 }
 
 func NewSystemConfigService(repo *repository.SystemConfigRepository) *SystemConfigService {
-	return &SystemConfigService{
-		repo: repo,
-	}
+	return &SystemConfigService{repo: repo}
 }
 
-// Create 创建配置
-func (s *SystemConfigService) Create(key, value, typ, remark string) error {
+// Create 创建系统配置
+func (s *SystemConfigService) Create(req *model.CreateSystemConfigRequest) (*model.SystemConfig, error) {
 	config := &model.SystemConfig{
-		Key:    key,
-		Value:  value,
-		Type:   typ,
-		Remark: remark,
+		Key:   req.Key,
+		Value: req.Value,
+		Type:  req.Type,
+		Desc:  req.Desc,
 	}
 
-	return s.repo.Create(config)
+	if err := s.repo.Create(config); err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+// GetByID 根据ID获取系统配置
+func (s *SystemConfigService) GetByID(id uint) (*model.SystemConfig, error) {
+	return s.repo.GetByID(id)
+}
+
+// List 获取系统配置列表
+func (s *SystemConfigService) List(page, size int) ([]model.SystemConfig, int64, error) {
+	return s.repo.List(page, size)
+}
+
+// Update 更新系统配置
+func (s *SystemConfigService) Update(id uint, req *model.UpdateSystemConfigRequest) error {
+	config, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+
+	config.Value = req.Value
+	config.Type = req.Type
+	config.Desc = req.Desc
+
+	return s.repo.Update(config)
+}
+
+// Delete 删除系统配置
+func (s *SystemConfigService) Delete(id uint) error {
+	return s.repo.Delete(id)
 }
 
 // GetByKey 根据key获取配置
@@ -38,33 +69,6 @@ func (s *SystemConfigService) GetByKey(key string) (*model.SystemConfig, error) 
 		return nil, errors.ErrConfigNotFound
 	}
 	return config, nil
-}
-
-// Update 更新配置
-func (s *SystemConfigService) Update(key, value, typ, remark string) error {
-	config, err := s.repo.GetByKey(key)
-	if err != nil {
-		return err
-	}
-	if config == nil {
-		return errors.ErrConfigNotFound
-	}
-
-	config.Value = value
-	config.Type = typ
-	config.Remark = remark
-
-	return s.repo.Update(config)
-}
-
-// Delete 删除配置
-func (s *SystemConfigService) Delete(key string) error {
-	return s.repo.Delete(key)
-}
-
-// List 获取配置列表
-func (s *SystemConfigService) List() ([]*model.SystemConfig, error) {
-	return s.repo.List()
 }
 
 // GetValue 获取配置值

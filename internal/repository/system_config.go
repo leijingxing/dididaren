@@ -16,9 +16,48 @@ func NewSystemConfigRepository(db *gorm.DB) *SystemConfigRepository {
 	}
 }
 
-// Create 创建配置
+// Create 创建系统配置
 func (r *SystemConfigRepository) Create(config *model.SystemConfig) error {
 	return r.db.Create(config).Error
+}
+
+// GetByID 根据ID获取系统配置
+func (r *SystemConfigRepository) GetByID(id uint) (*model.SystemConfig, error) {
+	var config model.SystemConfig
+	err := r.db.First(&config, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+// List 获取系统配置列表
+func (r *SystemConfigRepository) List(page, size int) ([]model.SystemConfig, int64, error) {
+	var configs []model.SystemConfig
+	var total int64
+
+	// 获取总数
+	if err := r.db.Model(&model.SystemConfig{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// 获取分页数据
+	offset := (page - 1) * size
+	if err := r.db.Offset(offset).Limit(size).Find(&configs).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return configs, total, nil
+}
+
+// Update 更新系统配置
+func (r *SystemConfigRepository) Update(config *model.SystemConfig) error {
+	return r.db.Save(config).Error
+}
+
+// Delete 删除系统配置
+func (r *SystemConfigRepository) Delete(id uint) error {
+	return r.db.Delete(&model.SystemConfig{}, id).Error
 }
 
 // GetByKey 根据key获取配置
@@ -29,26 +68,6 @@ func (r *SystemConfigRepository) GetByKey(key string) (*model.SystemConfig, erro
 		return nil, err
 	}
 	return &config, nil
-}
-
-// Update 更新配置
-func (r *SystemConfigRepository) Update(config *model.SystemConfig) error {
-	return r.db.Save(config).Error
-}
-
-// Delete 删除配置
-func (r *SystemConfigRepository) Delete(key string) error {
-	return r.db.Where("key = ?", key).Delete(&model.SystemConfig{}).Error
-}
-
-// List 获取配置列表
-func (r *SystemConfigRepository) List() ([]*model.SystemConfig, error) {
-	var configs []*model.SystemConfig
-	err := r.db.Find(&configs).Error
-	if err != nil {
-		return nil, err
-	}
-	return configs, nil
 }
 
 // GetValue 获取配置值

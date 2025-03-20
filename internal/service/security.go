@@ -46,7 +46,7 @@ func (s *SecurityService) UpdateStaffStatus(id uint, status string) error {
 func (s *SecurityService) CreateRating(req *model.CreateRatingRequest) (*model.Rating, error) {
 	rating := &model.Rating{
 		StaffID:  req.StaffID,
-		OrderID:  req.OrderID,
+		UserID:   req.UserID,
 		Score:    req.Score,
 		Comment:  req.Comment,
 		IsPublic: req.IsPublic,

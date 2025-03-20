@@ -66,10 +66,15 @@ func (h *SecurityHandler) CreateStaff(c *gin.Context) {
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /security/staff/{id} [get]
 func (h *SecurityHandler) GetStaff(c *gin.Context) {
-	id := c.Param("id")
-	staff, err := h.service.GetStaffByID(id)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
+		return
+	}
+
+	staff, err := h.service.GetStaffByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -91,13 +96,23 @@ func (h *SecurityHandler) GetStaff(c *gin.Context) {
 // @Failure      500      {object}  map[string]interface{}
 // @Router       /security/staff [get]
 func (h *SecurityHandler) ListStaffs(c *gin.Context) {
-	page := c.DefaultQuery("page", "1")
-	size := c.DefaultQuery("size", "10")
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的页码"})
+		return
+	}
+
+	size, err := strconv.Atoi(c.DefaultQuery("size", "10"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的每页数量"})
+		return
+	}
+
 	status := c.Query("status")
 
 	staffs, total, err := h.service.ListStaffs(page, size, status)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -125,11 +140,21 @@ func (h *SecurityHandler) ListStaffs(c *gin.Context) {
 // @Failure      500    {object}  map[string]interface{}
 // @Router       /security/staff/{id}/status [put]
 func (h *SecurityHandler) UpdateStaffStatus(c *gin.Context) {
-	id := c.Param("id")
-	status := c.Query("status")
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
+		return
+	}
 
-	if err := h.service.UpdateStaffStatus(id, status); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	status := c.Query("status")
+	if status == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "状态不能为空"})
+		return
+	}
+
+	err = h.service.UpdateStaffStatus(uint(id), status)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -182,10 +207,15 @@ func (h *SecurityHandler) CreateRating(c *gin.Context) {
 // @Failure      500       {object}  map[string]interface{}
 // @Router       /security/rating [get]
 func (h *SecurityHandler) ListRatings(c *gin.Context) {
-	staffID := c.Query("staff_id")
-	ratings, err := h.service.ListRatings(staffID)
+	staffID, err := strconv.ParseUint(c.Query("staff_id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的安保人员ID"})
+		return
+	}
+
+	ratings, err := h.service.ListRatings(uint(staffID))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

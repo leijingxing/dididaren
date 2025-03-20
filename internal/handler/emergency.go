@@ -17,7 +17,7 @@ func NewEmergencyHandler(service *service.EmergencyService) *EmergencyHandler {
 	return &EmergencyHandler{service: service}
 }
 
-// CreateEmergency 创建紧急事件
+// Create 创建紧急事件
 // @Summary 创建紧急事件
 // @Description 创建一个新的紧急事件
 // @Tags 紧急事件
@@ -29,7 +29,7 @@ func NewEmergencyHandler(service *service.EmergencyService) *EmergencyHandler {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/emergencies [post]
-func (h *EmergencyHandler) CreateEmergency(c *gin.Context) {
+func (h *EmergencyHandler) Create(c *gin.Context) {
 	var req model.CreateEmergencyRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,7 +37,7 @@ func (h *EmergencyHandler) CreateEmergency(c *gin.Context) {
 	}
 
 	userID := c.GetUint("user_id")
-	emergency, err := h.service.CreateEmergency(userID, &req)
+	emergency, err := h.service.Create(userID, &req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -46,7 +46,7 @@ func (h *EmergencyHandler) CreateEmergency(c *gin.Context) {
 	c.JSON(http.StatusOK, emergency)
 }
 
-// GetEmergency 获取紧急事件详情
+// GetByID 获取紧急事件详情
 // @Summary 获取紧急事件详情
 // @Description 根据ID获取紧急事件详情
 // @Tags 紧急事件
@@ -58,14 +58,14 @@ func (h *EmergencyHandler) CreateEmergency(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/emergencies/{id} [get]
-func (h *EmergencyHandler) GetEmergency(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+func (h *EmergencyHandler) GetByID(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
 		return
 	}
 
-	emergency, err := h.service.GetEmergencyByID(uint(id))
+	emergency, err := h.service.GetByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -74,7 +74,7 @@ func (h *EmergencyHandler) GetEmergency(c *gin.Context) {
 	c.JSON(http.StatusOK, emergency)
 }
 
-// ListEmergencies 获取紧急事件列表
+// List 获取紧急事件列表
 // @Summary 获取紧急事件列表
 // @Description 获取所有紧急事件列表，支持分页和状态筛选
 // @Tags 紧急事件
@@ -88,12 +88,11 @@ func (h *EmergencyHandler) GetEmergency(c *gin.Context) {
 // @Failure 400 {object} ErrorResponse
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/emergencies [get]
-func (h *EmergencyHandler) ListEmergencies(c *gin.Context) {
+func (h *EmergencyHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
-	status := c.Query("status")
 
-	emergencies, total, err := h.service.ListEmergencies(page, size, status)
+	emergencies, total, err := h.service.List(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -103,6 +102,45 @@ func (h *EmergencyHandler) ListEmergencies(c *gin.Context) {
 		"total": total,
 		"items": emergencies,
 	})
+}
+
+// Update 更新紧急事件
+func (h *EmergencyHandler) Update(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
+		return
+	}
+
+	var req model.UpdateEmergencyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	emergency, err := h.service.Update(uint(id), &req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, emergency)
+}
+
+// Delete 删除紧急事件
+func (h *EmergencyHandler) Delete(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
+		return
+	}
+
+	if err := h.service.Delete(uint(id)); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
 // CreateHandlingRecord 创建处理记录
@@ -119,7 +157,7 @@ func (h *EmergencyHandler) ListEmergencies(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/emergencies/{id}/records [post]
 func (h *EmergencyHandler) CreateHandlingRecord(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
 		return
@@ -131,8 +169,7 @@ func (h *EmergencyHandler) CreateHandlingRecord(c *gin.Context) {
 		return
 	}
 
-	staffID := c.GetUint("user_id")
-	record, err := h.service.CreateHandlingRecord(&req, uint(id), staffID)
+	record, err := h.service.CreateHandlingRecord(uint(id), &req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -154,7 +191,7 @@ func (h *EmergencyHandler) CreateHandlingRecord(c *gin.Context) {
 // @Failure 401 {object} ErrorResponse
 // @Router /api/v1/emergencies/{id}/records [get]
 func (h *EmergencyHandler) ListHandlingRecords(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
 		return
@@ -169,65 +206,24 @@ func (h *EmergencyHandler) ListHandlingRecords(c *gin.Context) {
 	c.JSON(http.StatusOK, records)
 }
 
-// AssignStaff 分配安保人员
-// @Summary 分配安保人员
-// @Description 为紧急事件分配安保人员
-// @Tags 紧急事件
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Bearer 用户令牌"
-// @Param id path int true "紧急事件ID"
-// @Param staff_id query int true "安保人员ID"
-// @Success 200 {object} SuccessResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Router /api/v1/emergencies/{id}/assign [post]
-func (h *EmergencyHandler) AssignStaff(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的事件ID"})
-		return
-	}
-
-	staffID, err := strconv.ParseUint(c.Query("staff_id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的安保人员ID"})
-		return
-	}
-
-	err = h.service.AssignStaff(uint(id), uint(staffID))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "分配成功"})
-}
-
-// CompleteEmergency 完成紧急事件
-// @Summary 完成紧急事件
-// @Description 标记紧急事件为已完成状态
-// @Tags 紧急事件
-// @Accept json
-// @Produce json
-// @Param Authorization header string true "Bearer 用户令牌"
-// @Param id path int true "紧急事件ID"
-// @Success 200 {object} SuccessResponse
-// @Failure 400 {object} ErrorResponse
-// @Failure 401 {object} ErrorResponse
-// @Router /api/v1/emergencies/{id}/complete [post]
-func (h *EmergencyHandler) CompleteEmergency(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+// UpdateStatus 更新紧急事件状态
+func (h *EmergencyHandler) UpdateStatus(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的ID"})
 		return
 	}
 
-	err = h.service.CompleteEmergency(uint(id))
-	if err != nil {
+	var req model.UpdateEmergencyStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "完成成功"})
+	if err := h.service.UpdateStatus(uint(id), req.Status); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "状态更新成功"})
 }

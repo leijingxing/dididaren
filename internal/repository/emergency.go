@@ -14,13 +14,13 @@ func NewEmergencyRepository(db *gorm.DB) *EmergencyRepository {
 	return &EmergencyRepository{db: db}
 }
 
-// CreateEmergency 创建紧急事件
-func (r *EmergencyRepository) CreateEmergency(emergency *model.Emergency) error {
+// Create 创建紧急事件
+func (r *EmergencyRepository) Create(emergency *model.Emergency) error {
 	return r.db.Create(emergency).Error
 }
 
-// GetEmergencyByID 根据ID获取紧急事件
-func (r *EmergencyRepository) GetEmergencyByID(id uint) (*model.Emergency, error) {
+// GetByID 获取紧急事件详情
+func (r *EmergencyRepository) GetByID(id uint) (*model.Emergency, error) {
 	var emergency model.Emergency
 	err := r.db.First(&emergency, id).Error
 	if err != nil {
@@ -29,22 +29,17 @@ func (r *EmergencyRepository) GetEmergencyByID(id uint) (*model.Emergency, error
 	return &emergency, nil
 }
 
-// ListEmergencies 获取紧急事件列表
-func (r *EmergencyRepository) ListEmergencies(page, size int, status string) ([]model.Emergency, int64, error) {
+// List 获取紧急事件列表
+func (r *EmergencyRepository) List(page, size int) ([]model.Emergency, int64, error) {
 	var emergencies []model.Emergency
 	var total int64
 
-	query := r.db.Model(&model.Emergency{})
-	if status != "" {
-		query = query.Where("status = ?", status)
-	}
-
-	err := query.Count(&total).Error
+	err := r.db.Model(&model.Emergency{}).Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = query.Offset((page - 1) * size).Limit(size).Find(&emergencies).Error
+	err = r.db.Offset((page - 1) * size).Limit(size).Find(&emergencies).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -52,14 +47,14 @@ func (r *EmergencyRepository) ListEmergencies(page, size int, status string) ([]
 	return emergencies, total, nil
 }
 
-// UpdateEmergencyStatus 更新紧急事件状态
-func (r *EmergencyRepository) UpdateEmergencyStatus(id uint, status string) error {
-	return r.db.Model(&model.Emergency{}).Where("id = ?", id).Update("status", status).Error
+// Update 更新紧急事件
+func (r *EmergencyRepository) Update(emergency *model.Emergency) error {
+	return r.db.Save(emergency).Error
 }
 
-// UpdateEmergency 更新紧急事件
-func (r *EmergencyRepository) UpdateEmergency(emergency *model.Emergency) error {
-	return r.db.Save(emergency).Error
+// Delete 删除紧急事件
+func (r *EmergencyRepository) Delete(id uint) error {
+	return r.db.Delete(&model.Emergency{}, id).Error
 }
 
 // CreateHandlingRecord 创建处理记录
